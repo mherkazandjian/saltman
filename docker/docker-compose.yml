@@ -1,0 +1,26 @@
+---
+version: '3.8'
+services:
+  saltman-master:
+    build:
+      context: "./master/"
+      dockerfile: Dockerfile
+    image: saltman-master
+    networks:
+      - saltman
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]
+    command: ["salt-master", "-l", "debug"]
+  saltman-minion01:
+    build:
+      context: "./minion/"
+      dockerfile: Dockerfile
+    image: saltman-minion01
+    networks:
+      - saltman
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]
+
+networks:
+  saltman:
+...

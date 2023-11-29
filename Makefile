@@ -36,6 +36,12 @@ docker-down:
 
 docker-up:
 	cd docker && docker-compose up -d
+	sleep 3
+	docker exec -it docker-saltman-master-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
+	docker exec -it docker-saltman-minion01-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
+	docker exec -it docker-saltman-master-1 systemctl start salt-master
+	docker exec -it docker-saltman-master-1 systemctl start salt-minion
+	docker exec -it docker-saltman-minion01-1 systemctl start salt-minion
 
 salt-master:
 	docker exec -it docker-saltman-master-1 bash

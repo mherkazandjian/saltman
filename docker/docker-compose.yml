@@ -9,8 +9,8 @@ services:
     networks:
       - saltman
     privileged: true
+    hostname: master
     entrypoint: ["/usr/sbin/init"]
-    command: ["salt-master", "-l", "debug"]
   saltman-minion01:
     build:
       context: "./minion/"
@@ -19,6 +19,7 @@ services:
     networks:
       - saltman
     privileged: true
+    hostname: minion01
     entrypoint: ["/usr/sbin/init"]
 
 networks:

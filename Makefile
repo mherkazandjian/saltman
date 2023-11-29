@@ -42,6 +42,10 @@ docker-up:
 	docker exec -it docker-saltman-master-1 systemctl start salt-master
 	docker exec -it docker-saltman-master-1 systemctl start salt-minion
 	docker exec -it docker-saltman-minion01-1 systemctl start salt-minion
+	sleep 3
+	docker exec -it docker-saltman-master-1 salt-key -A -y
+	sleep 10
+	docker exec -it docker-saltman-master-1 salt '*' test.ping
 
 salt-master:
 	docker exec -it docker-saltman-master-1 bash

@@ -10,6 +10,10 @@ services:
       - saltman
     privileged: true
     hostname: master
+    ports:
+      - "12522:22"
+    expose:
+      - "12522"
     entrypoint: ["/usr/sbin/init"]
   saltman-minion01:
     build:
@@ -20,6 +24,10 @@ services:
       - saltman
     privileged: true
     hostname: minion01
+    ports:
+      - "12523:22"
+    expose:
+      - "12523:22"
     entrypoint: ["/usr/sbin/init"]
 
 networks:

@@ -13,6 +13,8 @@ services:
       - "12522:22"
     expose:
       - "12522"
+    volumes:
+      - ${WORKSPACE_DIR}/admin:/admin
   saltman-salt-minion01:
     build:
       context: "."
@@ -26,7 +28,13 @@ services:
       - "12523:22"
     expose:
       - "12523:22"
+    volumes:
+      - ${WORKSPACE_DIR}/admin:/admin
 
 networks:
   saltman:
+
+volumes:
+  saltman-master:
+  saltman-minion:
 ...

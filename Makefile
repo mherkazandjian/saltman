@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 .PHONY: nothing
@@ -7,8 +8,9 @@ ifeq ($(debug),true)
     DEBUG_OPTS = -s --pdb
 endif
 
+
 docker-compose-build:
-	docker-compose -f docker/docker-compose.yml build
+	docker compose --env-file examples/clouddev01/docker-compose-dot-env -f docker/docker-compose.yml build
 
 bootstrap:
 	pip install -r requirements.txt
@@ -39,8 +41,7 @@ docker-down:
 
 
 provision: docker-compose-build
-#	docker-compose -f docker/docker-compose.yml up -d
-	docker-compose -f docker/docker-compose.yml up
+	docker compose --env-file examples/clouddev01/docker-compose-dot-env -f docker/docker-compose.yml up
 
 docker-up:
 

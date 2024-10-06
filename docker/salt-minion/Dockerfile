@@ -4,6 +4,8 @@ FROM rockylinux:9.3
 RUN dnf update -y && \
     dnf clean all
 RUN dnf -y install \
+        wget \
+        sudo \
         procps \
         vim \
         less \

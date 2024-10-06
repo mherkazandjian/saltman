@@ -13,6 +13,8 @@ services:
       - "12522:22"
     expose:
       - "12522"
+    environment:
+      - ADMIN_SSH_PUBLIC_KEY
     volumes:
       - ${WORKSPACE_DIR}/admin:/admin
   saltman-salt-minion01:
@@ -28,6 +30,8 @@ services:
       - "12523:22"
     expose:
       - "12523:22"
+    environment:
+      - ADMIN_SSH_PUBLIC_KEY
     volumes:
       - ${WORKSPACE_DIR}/admin:/admin
 

@@ -19,7 +19,7 @@ if ! id -u admin &>/dev/null; then
 
     # if the environment variable SSH_PUBLIC_KEY is set, add it to the authorized_keys file
     if [ -z "$ADMIN_SSH_PUBLIC_KEY" ]; then
-        echo "SALTMAN ERROR: No SSH public key provided for the admin user."
+        echo "SALTMAN ERROR: ADMIN_SSH_PUBLIC_KEY is not defined. No SSH public key provided for the admin user."
         exit 1
     fi
     if [ -n "$ADMIN_SSH_PUBLIC_KEY" ]; then

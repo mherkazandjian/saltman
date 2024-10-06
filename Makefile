@@ -7,8 +7,11 @@ ifeq ($(debug),true)
     DEBUG_OPTS = -s --pdb
 endif
 
-docker-build:
-	cd docker && docker-compose build
+docker-compose-build:
+	docker-compose -f docker/docker-compose.yml build
+
+bootstrap:
+	pip install -r requirements.txt
 
 docker-clean-containers:
 	cd docker && docker-compose down -v || true
@@ -34,8 +37,13 @@ docker-deep-clean: docker-clean-containers docker-clean-images docker-clean-volu
 docker-down:
 	cd docker && docker-compose down
 
+
+provision: docker-compose-build
+#	docker-compose -f docker/docker-compose.yml up -d
+	docker-compose -f docker/docker-compose.yml up
+
 docker-up:
-	cd docker && docker-compose up -d
+
 	sleep 3
 	docker exec -it docker-saltman-master-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
 	docker exec -it docker-saltman-minion01-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
@@ -50,9 +58,6 @@ docker-up:
 salt-master:
 	docker exec -it docker-saltman-master-1 bash
 
-help:
-	@echo "no help info"
-
 clean:
 	@rm -fvr \
 		\#* \
@@ -64,4 +69,13 @@ clean:
 	@find . -name "*__pycache__*" | xargs rm -fvr
 	@find . -name "*.pyc*" | xargs rm -fvr
 	@find . -name "*.pyo*" | xargs rm -fvr
-#
+
+help:
+	@echo docker-build:
+	@echo docker-clean-containers:
+	@echo docker-clean-images:
+	@echo docker-clean-volumes:
+	@echo docker-deep-clean: docker-clean-containers docker-clean-images docker-clean-volume
+	@echo docker-down:
+	@echo docker-up:
+	@echo salt-master:

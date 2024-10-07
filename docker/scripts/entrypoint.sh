@@ -4,11 +4,13 @@ set -e
 # .. todo:: maybe do this via ansible here?
 # add the admin user that has a home directory /admin
 if ! id -u admin &>/dev/null; then
+    echo "creating admin user"
     useradd -m admin -s /bin/bash -d /admin
     chown -Rc admin:admin /admin
 
     # if the ssh key does not exist, generate it
     if [ ! -f /admin/.ssh/id_ed25519 ]; then
+        echo "creating ssh key for admin user"
         su - admin -c "ssh-keygen -t ed25519 -C 'admin key' -f ~/.ssh/id_ed25519 -b 2048 -P '' -q"
     fi
 
@@ -23,7 +25,14 @@ if ! id -u admin &>/dev/null; then
         exit 1
     fi
     if [ -n "$ADMIN_SSH_PUBLIC_KEY" ]; then
+        echo "add the provided public key to the authorized_keys file"
         echo "$ADMIN_SSH_PUBLIC_KEY" >> /admin/.ssh/authorized_keys
+    fi
+
+    # if the public key is not already in the authorized_keys file, add it
+    if ! grep -q "$(cat /admin/.ssh/id_ed25519.pub)" /admin/.ssh/authorized_keys; then
+        echo "add the generated public key to the authorized_keys file"
+        cat /admin/.ssh/id_ed25519.pub >> /admin/.ssh/authorized_keys
     fi
 fi
 

@@ -1,67 +1,106 @@
 SHELL := /bin/bash
 ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-WORKSPACE_DIR := $(shell grep -E '^\s*workdir\s*:' examples/clouddev01/conf.yml | awk -F':' '{gsub(/^[ \t]+|[ \t]+$$/, "", $$2); print $$2}')
 
-include ${WORKSPACE_DIR}/env.sh
+CURRENT_ENV_EXISTS := $(shell test -f .current_env && printf yes)
+
+ifeq "$(origin infra)" "command line"
+INFRA = ${infra}
+endif
+
+ifeq (${CURRENT_ENV_EXISTS},yes)
+include .current_env
+ifeq "$(origin infra)" "command line"
+INFRA = ${infra}
+endif
+else
+$(info )
+$(info WARNING:)
+$(info |    .current_env does not exist or points to a dead symlink)
+$(info |    set an environemt by pointing to a certain environment file)
+$(info )
+$(info examples:)
+$(info )
+$(info |    - make set-current-env env=~/workspaces/cluster_minimal/env.sh)
+$(info |    - make set-default-env env=~/workspaces/cluster_minimal/env.sh)
+endif
+
+
+#include ${WORKSPACE_DIR}/env.sh
 ANSIBLE_FLAGS = -i ${INVENTORY} --ssh-extra-args '-F ${SSH_CONFIG}'
 
 .PHONY: nothing
 nothing:
 
-ifeq ($(debug),true)
-    DEBUG_OPTS = -s --pdb
-endif
+set-default-env:
+	@ln -sf ${env} .default_env
+
+set-current-env:
+	@ln -sf ${env} .current_env
+
+set-current-env-as-default:
+	@ln -sf .current_env .default_env
+
+use-default-env-as-current:
+	@ln -sf .default_env .current_env
+
+env:
+	@[[ -f .current_env ]] && echo current_env: || true
+	@[[ -f .current_env ]] && ls -l .current_env || true
+	@[[ -f .default_env ]] && echo default_env || true
+	@[[ -f .default_env ]] && ls -l .default_env || true
+	@echo "current environment"
+	@echo "-------------------"
+	@echo "env vars"
+	@echo "    WORKSPACE=${WORKSPACE}"
+	@echo "    INVENTORY=${INVENTORY}"
+	@echo "    SSH_CONFIG=${SSH_CONFIG}"
+	@echo "    GATEWAYHOST=${GATEWAYHOST}"
+	@echo "    SALTMASTER=${SALTMASTER}"
+	@echo "    INFRA=${INFRA}"
+	@echo "make vars"
+	@echo "    ANSIBLE_FLAGS=${ANSIBLE_FLAGS}"
+
+list-envs:
+	@for confpath in `find projects -type f -name conf.yml -not -path "*template*"`; do \
+		envpathbase=$$(grep workdir $${confpath} | awk '{print $$2}'); \
+		envpath=$${envpathbase/#\~/$$HOME}/env.sh; \
+		if [ -f $${envpath} ]; then \
+			echo "make set-current-env env="$${envpath}; \
+			echo "     " `grep "short_description:" $${confpath}`; \
+		fi; \
+	done
+
+bootstrap-project:
+	echo "bootstrap-project"
+	python src/bootstrap_project.py projects/${INFRA}/conf.yml
+
+
 
 
 docker-compose-build:
-	docker compose --env-file examples/clouddev01/docker-compose-dot-env -f docker/docker-compose.yml build
+	echo "docker-compose-build"
+	docker compose \
+		--env-file ${WORKSPACE}/docker_compose_dot_env \
+		--project-directory ${PWD}/docker \
+		-f ${WORKSPACE}/docker-compose.yml \
+		build
 
 #bootstrap:
 #	pip install -r requirements.txt
 
-docker-clean-containers:
-	cd docker && docker-compose down -v || true
-	docker rm \
-		docker-saltman-minion01-1 \
-		docker-saltman-master-1 \
-	|| true
-
-docker-clean-volumes:
-	docker volume rm \
-		docker_saltman_master \
-		docker_saltman_minion01 \
-	|| true
-
-docker-full-clean: docker-clean-containers docker-clean-volumes
-	cd docker && docker compose rm -fsv || true
-
-docker-clean-images:
-	docker rmi \
-		saltman-minion01 \
-		saltman-master \
-	|| true
-
-docker-deep-clean: docker-clean-containers docker-clean-images docker-clean-volume
-
-docker-down:
-	cd docker && docker-compose down
-
-
-create_admin_ssh_key:
-	ssh-keygen -t ed25519 -C 'admin key' -f ${WORKSPACE_DIR}/id_ed25519 -b 2048 -P '' -q
-
 provision: docker-compose-build
-	ADMIN_SSH_PUBLIC_KEY=`cat ${WORKSPACE_DIR}/id_ed25519.pub` \
-		docker compose --env-file examples/clouddev01/docker-compose-dot-env -f docker/docker-compose.yml up
+	ADMIN_SSH_PUBLIC_KEY=`cat ${WORKSPACE}/id_ed25519.pub` \
+		docker compose \
+			--env-file ${WORKSPACE}/docker_compose_dot_env \
+			--project-directory ${PWD}/docker \
+			-f ${WORKSPACE}/docker-compose.yml \
+			up
 
 ping:
 	@ansible ${ANSIBLE_FLAGS} all -o -m ansible.builtin.ping
 
 ssh:
 	ssh -F ${SSH_CONFIG} -t ${GATEWAYHOST}
-
-
-
 
 docker-up:
 
@@ -79,6 +118,36 @@ docker-up:
 salt-master:
 	docker exec -it docker-saltman-master-1 bash
 
+docker-clean-containers:
+	cd docker && docker-compose down -v || true
+	docker rm \
+		docker-saltman-minion01-1 \
+		docker-saltman-master-1 \
+	|| true
+
+docker-clean-volumes:
+	docker volume rm \
+		docker_saltman_master \
+		docker_saltman_minion01 \
+	|| true
+
+docker-full-clean: docker-clean-containers docker-clean-volumes
+	docker compose \
+		--env-file ${WORKSPACE}/docker_compose_dot_env \
+		--project-directory ${PWD}/docker \
+		-f ${WORKSPACE}/docker-compose.yml \
+		rm -fsv || true
+
+docker-clean-images:
+	docker rmi \
+		saltman-minion01 \
+		saltman-master \
+	|| true
+
+docker-deep-clean: docker-clean-containers docker-clean-images docker-clean-volume
+
+docker-down:
+	cd docker && docker-compose down
 clean:
 	@rm -fvr \
 		\#* \

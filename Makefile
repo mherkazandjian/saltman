@@ -148,6 +148,14 @@ ssh:
 salt-master:
 	docker exec -it docker-saltman-master-1 bash
 
+salt-ssh-master:
+	ssh -F ${SSH_CONFIG} -t ${SALTMASTER} "sudo su - root"
+ssh-root: salt-ssh-master
+ssh:
+	ssh -F ${SSH_CONFIG} -t ${GATEWAYHOST}
+ssh-to:
+	ssh -F ${SSH_CONFIG} -t ${host}
+
 ################
 docker-clean-containers:
 	cd docker && docker-compose down -v || true

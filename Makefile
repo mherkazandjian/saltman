@@ -70,12 +70,10 @@ list-envs:
 		fi; \
 	done
 
+################
 bootstrap-project:
 	echo "bootstrap-project"
 	python src/bootstrap_project.py projects/${INFRA}/conf.yml
-
-
-
 
 docker-compose-build:
 	echo "docker-compose-build"
@@ -85,8 +83,6 @@ docker-compose-build:
 		-f ${WORKSPACE}/docker-compose.yml \
 		build
 
-#bootstrap:
-#	pip install -r requirements.txt
 
 provision: docker-compose-build
 	ADMIN_SSH_PUBLIC_KEY=`cat ${WORKSPACE}/id_ed25519.pub` \
@@ -96,14 +92,31 @@ provision: docker-compose-build
 			-f ${WORKSPACE}/docker-compose.yml \
 			up
 
-ping:
-	@ansible ${ANSIBLE_FLAGS} all -o -m ansible.builtin.ping
+docker-compose:
+	ADMIN_SSH_PUBLIC_KEY=`cat ${WORKSPACE}/id_ed25519.pub` \
+		docker compose \
+			--env-file ${WORKSPACE}/docker_compose_dot_env \
+			--project-directory ${PWD}/docker \
+			-f ${WORKSPACE}/docker-compose.yml \
+			${args}
 
-ssh:
-	ssh -F ${SSH_CONFIG} -t ${GATEWAYHOST}
+suspend: docker-compose-build
+	docker compose \
+		--env-file ${WORKSPACE}/docker_compose_dot_env \
+		--project-directory ${PWD}/docker \
+		-f ${WORKSPACE}/docker-compose.yml \
+		pause
 
+resume: docker-compose-build
+	docker compose \
+		--env-file ${WORKSPACE}/docker_compose_dot_env \
+		--project-directory ${PWD}/docker \
+		-f ${WORKSPACE}/docker-compose.yml \
+		unpause
+
+
+################
 docker-up:
-
 	sleep 3
 	docker exec -it docker-saltman-master-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
 	docker exec -it docker-saltman-minion01-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
@@ -115,9 +128,27 @@ docker-up:
 	sleep 10
 	docker exec -it docker-saltman-master-1 salt '*' test.ping
 
+################
+playbook:
+	ansible-playbook ${ANSIBLE_FLAGS} ${PLAYBOOK} ${TAGS}
+
+bootstrap:
+	ansible-playbook ${ANSIBLE_FLAGS} ansible/site.yml ${TAGS}
+
+ping:
+	@ansible ${ANSIBLE_FLAGS} all -o -m ansible.builtin.ping
+
+cmd:
+	ansible ${ANSIBLE_FLAGS} all -u admin -b -m ansible.builtin.shell -a "${CMD}"
+
+################
+ssh:
+	ssh -F ${SSH_CONFIG} -t ${GATEWAYHOST}
+
 salt-master:
 	docker exec -it docker-saltman-master-1 bash
 
+################
 docker-clean-containers:
 	cd docker && docker-compose down -v || true
 	docker rm \
@@ -145,6 +176,7 @@ docker-clean-images:
 	|| true
 
 docker-deep-clean: docker-clean-containers docker-clean-images docker-clean-volume
+################
 
 docker-down:
 	cd docker && docker-compose down
@@ -169,3 +201,4 @@ help:
 	@echo docker-down:
 	@echo docker-up:
 	@echo salt-master:
+	@echo playbook: 'make playbook PLAYBOOK="../path/to/myplaybook.yml --check"'

@@ -116,6 +116,7 @@ resume: docker-compose-build
 
 
 ################
+## .. todo:: this target needs be updated
 docker-up:
 	sleep 3
 	docker exec -it docker-saltman-master-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
@@ -151,33 +152,38 @@ salt-master:
 salt-ssh-master:
 	ssh -F ${SSH_CONFIG} -t ${SALTMASTER} "sudo su - root"
 ssh-root: salt-ssh-master
-ssh:
-	ssh -F ${SSH_CONFIG} -t ${GATEWAYHOST}
 ssh-to:
 	ssh -F ${SSH_CONFIG} -t ${host}
 
 ################
-docker-clean-containers:
-	cd docker && docker-compose down -v || true
+down:
+	docker compose \
+		--env-file ${WORKSPACE}/docker_compose_dot_env \
+		--project-directory ${PWD}/docker \
+		-f ${WORKSPACE}/docker-compose.yml \
+		down -v || true
+stop: down   # alias for stop
+
+docker-clean-containers: stop
 	docker rm \
 		docker-saltman-minion01-1 \
 		docker-saltman-master-1 \
 	|| true
 
-docker-clean-volumes:
+docker-clean-volumes: stop
 	docker volume rm \
 		docker_saltman_master \
 		docker_saltman_minion01 \
 	|| true
 
-docker-full-clean: docker-clean-containers docker-clean-volumes
+full-clean: docker-clean-containers docker-clean-volumes
 	docker compose \
 		--env-file ${WORKSPACE}/docker_compose_dot_env \
 		--project-directory ${PWD}/docker \
 		-f ${WORKSPACE}/docker-compose.yml \
 		rm -fsv || true
 
-docker-clean-images:
+deep-clean:
 	docker rmi \
 		saltman-minion01 \
 		saltman-master \
@@ -186,8 +192,6 @@ docker-clean-images:
 docker-deep-clean: docker-clean-containers docker-clean-images docker-clean-volume
 ################
 
-docker-down:
-	cd docker && docker-compose down
 clean:
 	@rm -fvr \
 		\#* \

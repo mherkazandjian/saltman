@@ -7,6 +7,10 @@ ifeq "$(origin infra)" "command line"
 INFRA = ${infra}
 endif
 
+ifeq "$(origin ansible_opts)" "command line"
+ANSIBLE_OPTS = ${ansible_opts}
+endif
+
 ifeq (${CURRENT_ENV_EXISTS},yes)
 include .current_env
 ifeq "$(origin infra)" "command line"
@@ -129,18 +133,27 @@ docker-up:
 	sleep 10
 	docker exec -it docker-saltman-master-1 salt '*' test.ping
 
+
 ################
+ANSIBLE_OPTS=
+ANSIBLE_SITE=${HOME}/projects/surf/dms-salt-researchcloud/ansible
+ansible-site-syntax:
+	ansible-playbook ${ANSIBLE_FLAGS} --become ${ANSIBLE_SITE}/site.yml ${TAGS} --syntax-check ${ANSIBLE_OPTS}
+
+site:
+	ansible-playbook ${ANSIBLE_FLAGS} --become ${ANSIBLE_SITE}/site.yml ${TAGS} ${ANSIBLE_OPTS}
+
 playbook:
-	ansible-playbook ${ANSIBLE_FLAGS} ${PLAYBOOK} ${TAGS}
+	ansible-playbook ${ANSIBLE_FLAGS} ${PLAYBOOK} ${TAGS} ${ANSIBLE_OPTS}
 
 bootstrap:
-	ansible-playbook ${ANSIBLE_FLAGS} ansible/site.yml ${TAGS}
+	ansible-playbook ${ANSIBLE_FLAGS} ansible/site.yml ${TAGS} ${ANSIBLE_OPTS}
 
 ping:
-	@ansible ${ANSIBLE_FLAGS} all -o -m ansible.builtin.ping
+	@ansible ${ANSIBLE_FLAGS} all -o -m ansible.builtin.ping ${ANSIBLE_OPTS}
 
 cmd:
-	ansible ${ANSIBLE_FLAGS} all -u admin -b -m ansible.builtin.shell -a "${CMD}"
+	ansible ${ANSIBLE_FLAGS} all -u admin -b -m ansible.builtin.shell -a "${CMD}" ${ANSIBLE_OPTS}
 
 ################
 ssh:
@@ -149,11 +162,15 @@ ssh:
 salt-master:
 	docker exec -it docker-saltman-master-1 bash
 
-salt-ssh-master:
+ssh-salt-master:
 	ssh -F ${SSH_CONFIG} -t ${SALTMASTER} "sudo su - root"
 ssh-root: salt-ssh-master
 ssh-to:
 	ssh -F ${SSH_CONFIG} -t ${host}
+
+################
+salt-ping:
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' test.ping -t 120"
 
 ################
 down:

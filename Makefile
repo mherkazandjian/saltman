@@ -169,7 +169,7 @@ ssh-salt-master:
 	ssh -F ${SSH_CONFIG} -t ${SALTMASTER} "sudo su - root"
 ssh-root: ssh-salt-master
 ssh-to:
-	ssh -F ${SSH_CONFIG} -t ${host}
+	ssh -F ${SSH_CONFIG} -t ${host} "sudo su - root"
 
 ################
 salt-ping:

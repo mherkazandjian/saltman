@@ -5,6 +5,7 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.backends import default_backend
 
+
 def provision_config(conf_path):
     with open(conf_path, 'r') as fobj:
         conf = yaml.safe_load(fobj.read())
@@ -78,6 +79,7 @@ def provision_config(conf_path):
 
         private_key = ed25519.Ed25519PrivateKey.generate()
         public_key = private_key.public_key()
+        public_key_comment = b'admin key host'
 
         # define file names for the keys
         key_name = cluster_conf['admin_key_name']
@@ -88,18 +90,18 @@ def provision_config(conf_path):
         with open(private_key_path, "wb") as fobj:
             fobj.write(private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
+                format=serialization.PrivateFormat.OpenSSH,
                 encryption_algorithm=serialization.NoEncryption()
             ))
         os.chmod(private_key_path, 0o600)
 
         # serialize the public key to OpenSSH format
         with open(public_key_fpath, "wb") as fobj:
-            fobj.write(public_key.public_bytes(
+            content = public_key.public_bytes(
                 encoding=serialization.Encoding.OpenSSH,
-                format=serialization.PublicFormat.OpenSSH
-
-            ))
+                format=serialization.PublicFormat.OpenSSH)
+            content += b' ' + public_key_comment + b'\n'
+            fobj.write(content)
         print('  done')
 
 provision_config(sys.argv[1])

@@ -96,6 +96,9 @@ provision: docker-compose-build
 			-f ${WORKSPACE}/docker-compose.yml \
 			up
 
+start: provision
+up: provision
+
 docker-compose:
 	ADMIN_SSH_PUBLIC_KEY=`cat ${WORKSPACE}/id_ed25519.pub` \
 		docker compose \
@@ -147,7 +150,7 @@ playbook:
 	ansible-playbook ${ANSIBLE_FLAGS} ${PLAYBOOK} ${TAGS} ${ANSIBLE_OPTS}
 
 bootstrap:
-	ansible-playbook ${ANSIBLE_FLAGS} ansible/site.yml ${TAGS} ${ANSIBLE_OPTS}
+	ansible-playbook ${ANSIBLE_FLAGS} ${ANSIBLE_SITE}/site.yml ${TAGS} ${ANSIBLE_OPTS}
 
 ping:
 	@ansible ${ANSIBLE_FLAGS} all -o -m ansible.builtin.ping ${ANSIBLE_OPTS}
@@ -164,14 +167,37 @@ salt-master:
 
 ssh-salt-master:
 	ssh -F ${SSH_CONFIG} -t ${SALTMASTER} "sudo su - root"
-ssh-root: salt-ssh-master
+ssh-root: ssh-salt-master
 ssh-to:
 	ssh -F ${SSH_CONFIG} -t ${host}
 
 ################
 salt-ping:
 	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' test.ping -t 120"
+salt-bootstrap:
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt ${SALTMASTER} state.apply linux.salt -t 120"
+	ansible ${ANSIBLE_FLAGS} ${SALTMASTER} -u admin -b -m ansible.builtin.shell -a "systemctl restart salt-master"
+	ansible ${ANSIBLE_FLAGS} all -u admin -b -m ansible.builtin.shell -a "systemctl restart salt-minion"
 
+salt-sync-states:
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.sync_states -t 120"
+
+salt-refresh-pillars:
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.refresh_pillar -t 120"
+
+salt-sync:
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.refresh_pillar -t 120"
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.sync_all -t 120"
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.sync_states -t 120"
+
+salt-clear-cache:
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.clear_cache -t 120"
+
+salt-refresh: | salt-clear-cache salt-sync
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.clear_cache -t 120"
+
+salt-apply:
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' state.apply -t 120"
 ################
 down:
 	docker compose \

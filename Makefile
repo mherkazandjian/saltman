@@ -76,7 +76,7 @@ list-envs:
 
 ################
 bootstrap-project:
-	echo "bootstrap-project"
+	@echo "bootstrap-project"
 	python src/bootstrap_project.py projects/${INFRA}/conf.yml
 
 docker-compose-build:
@@ -121,6 +121,23 @@ resume: docker-compose-build
 		-f ${WORKSPACE}/docker-compose.yml \
 		unpause
 
+
+saltman-snapshot-take:
+	@echo "take a snapshot of the containers."
+	python src/snapshots.py \
+		-f ${WORKSPACE}/docker-compose.yml \
+		--action take \
+		--name ${name}
+
+saltman-snapshot-restore:
+	@echo "restore the state of the container from snapshots."
+	python src/snapshots.py \
+		-f ${WORKSPACE}/docker-compose.yml \
+		--action restore \
+		--name ${name}
+
+#saltman-snapshot-list:
+#	cd examples/${INFRA} && saltman snapshot list
 
 ################
 ## .. todo:: this target needs be updated

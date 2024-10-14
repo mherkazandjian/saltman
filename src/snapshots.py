@@ -22,14 +22,14 @@ def parse_args() -> argparse.Namespace:
             "\n"
             "usage example\n"
             "\n"
-            "    # aaaaaaaaaaa\n"
-            "       yed --yaml=/path/to/foo.yml --data-in-from-file=/tmp/foo.txt --target-key=foo:bar:baz\n"
-            "       yed --yaml=~/projects/surf/dms-salt-pillar/nodes/frost-yoda/ssl.sls --data-in-from-file ~/certs/frost-yoda_irods_surfsara_nl_cert.cer  --target-key 'ssl:cert'\n"
-            "    # bbbbbbbbb\n"
-            "       yed --yaml=/path/to/foo.yml --target-key 'ssl:cert' --data-in-from-url 'https://cert-manager.com/customer/foocustomer/ssl?action=download&sslId=42098234format=x509CO'\n"
+            "    # Take a snapshot (docker commits the container)\n"
+            "       python snapshots.py -f /path/to/docker-compose.yml --action take --name my-foo-snap
+            "    # Restore a snapshot (only updates the image names docker-compose file)\n"
+            "       python snapshots.py -f /path/to/docker-compose.yml --action restore --name my-foo-snap
         ),
         formatter_class=RawTextHelpFormatter
     )
+
 
     parser.add_argument(
         "-f",
@@ -56,60 +56,6 @@ def parse_args() -> argparse.Namespace:
         dest="snapshot_name",
         help="The hyphen separated name of the snapshot, e.g foo-bar-baz"
     )
-
-#    parser.add_argument(
-#        "--data-in-from-file",
-#        type=str,
-#        default=None,
-#        dest="content_file",
-#        help="The path to file that contains the content of the data"
-#    )
-#
-#    parser.add_argument(
-#        "--data-in-from-url",
-#        type=str,
-#        default=None,
-#        dest="content_url",
-#        help="The url to the file that contains the content of the data"
-#    )
-#
-#    parser.add_argument(
-#        "--data-in-from-yaml",
-#        type=str,
-#        default=None,
-#        dest="content_yml",
-#        help="The path to the source yaml file from which to extract a key value"
-#    )
-#
-#    parser.add_argument(
-#        "--src-key",
-#        type=str,
-#        default=None,
-#        dest="src_key",
-#        help="The source key in the yaml file to be extracted"
-#    )
-#
-#    parser.add_argument(
-#        "--target-key",
-#        type=str,
-#        default=None,
-#        dest="target_key",
-#        help="The target key in the yaml file to be replaced"
-#    )
-#
-#    parser.add_argument(
-#        "--extract",
-#        action="store_true",
-#        default=False,
-#        help="Extract the value of the target key"
-#    )
-#
-#    parser.add_argument(
-#        "-v",
-#        "--verbosity",
-#        action="count",
-#        default=0
-#    )
 
     return parser.parse_args()
 

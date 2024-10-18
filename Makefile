@@ -94,7 +94,8 @@ provision: docker-compose-build
 			--env-file ${WORKSPACE}/docker_compose_dot_env \
 			--project-directory ${PWD}/docker \
 			-f ${WORKSPACE}/docker-compose.yml \
-			up
+			up -d
+
 
 start: provision
 up: provision
@@ -141,17 +142,17 @@ saltman-snapshot-restore:
 
 ################
 ## .. todo:: this target needs be updated
-docker-up:
-	sleep 3
-	docker exec -it docker-saltman-master-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
-	docker exec -it docker-saltman-minion01-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
-	docker exec -it docker-saltman-master-1 systemctl start salt-master
-	docker exec -it docker-saltman-master-1 systemctl start salt-minion
-	docker exec -it docker-saltman-minion01-1 systemctl start salt-minion
-	sleep 3
-	docker exec -it docker-saltman-master-1 salt-key -A -y
-	sleep 10
-	docker exec -it docker-saltman-master-1 salt '*' test.ping
+#docker-up:
+#	sleep 3
+#	docker exec -it docker-saltman-master-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
+#	docker exec -it docker-saltman-minion01-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
+#	docker exec -it docker-saltman-master-1 systemctl start salt-master
+#	docker exec -it docker-saltman-master-1 systemctl start salt-minion
+#	docker exec -it docker-saltman-minion01-1 systemctl start salt-minion
+#	sleep 3
+#	docker exec -it docker-saltman-master-1 salt-key -A -y
+#	sleep 10
+#	docker exec -it docker-saltman-master-1 salt '*' test.ping
 
 
 ################
@@ -180,7 +181,7 @@ ssh:
 	ssh -F ${SSH_CONFIG} -t ${GATEWAYHOST}
 
 salt-master:
-	docker exec -it docker-saltman-master-1 bash
+	docker exec -it docker-saltman-salt-master-1 /bin/bash
 
 ssh-salt-master:
 	ssh -F ${SSH_CONFIG} -t ${SALTMASTER} "sudo su - root"

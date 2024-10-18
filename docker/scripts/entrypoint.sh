@@ -42,6 +42,28 @@ if ! grep -q "^admin" /etc/sudoers; then
     echo "admin ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 fi
 
+# if the file /run/nologin exists, delete it
+if [ -f /run/nologin ]; then
+    echo "deleting the /run/nologin file"
+    rm -fvr /run/nologin
+else
+    echo "the /run/nologin file does not exist"
+fi
+
+# define a function that runs contineously and checks when /run/nologin is created
+# once it finds it, it deletes it
+function check_nologin {
+    while true; do
+        if [ -f /run/nologin ]; then
+            echo "deleting the /run/nologin file"
+            rm -fvr /run/nologin
+        fi
+        sleep 1
+    done
+}
+
+check_nologin &
+
 echo "start init"
 #touch /admin/`date +%s`
 

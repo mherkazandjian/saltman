@@ -23,9 +23,9 @@ def parse_args() -> argparse.Namespace:
             "usage example\n"
             "\n"
             "    # Take a snapshot (docker commits the container)\n"
-            "       python snapshots.py -f /path/to/docker-compose.yml --action take --name my-foo-snap
+            "       python snapshots.py -f /path/to/docker-compose.yml --action take --name my-foo-snap"
             "    # Restore a snapshot (only updates the image names docker-compose file)\n"
-            "       python snapshots.py -f /path/to/docker-compose.yml --action restore --name my-foo-snap
+            "       python snapshots.py -f /path/to/docker-compose.yml --action restore --name my-foo-snap"
         ),
         formatter_class=RawTextHelpFormatter
     )

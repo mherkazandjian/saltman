@@ -14,8 +14,8 @@ make site
 make salt-bootstrap
 make salt-refresh
 
-make saltman-snapshot-take name='foo'
-make saltman-snapshot-restore name='foo'
+make saltman-snapshot-take name='vanilla'
+make saltman-snapshot-restore name='vanilla'
 make up
 make site TAGS='--tags=salt-service'
 ```

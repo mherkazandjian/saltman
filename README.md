@@ -3,6 +3,8 @@
 ## Development workflow
 
 ```bash
+make down
+make full-clean
 make bootstrap-project infra=dev01
 make set-current-env env=$HOME/workspaces/saltman/docker/dev01/env.sh
 make docker-compose-build

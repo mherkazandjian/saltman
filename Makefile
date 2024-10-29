@@ -11,6 +11,9 @@ ifeq "$(origin ansible_opts)" "command line"
 ANSIBLE_OPTS = ${ansible_opts}
 endif
 
+# .. todo::
+#   - modify the functionality such that if the SALTMAN_INFRA is not set then .current_env is used
+#     otherwise SALTMAN_INFRA is used then .current_env_${SALTMAN_INFRA} is used
 ifeq (${CURRENT_ENV_EXISTS},yes)
 include .current_env
 ifeq "$(origin infra)" "command line"
@@ -84,6 +87,7 @@ docker-compose-build:
 	docker compose \
 		--env-file ${WORKSPACE}/docker_compose_dot_env \
 		--project-directory ${PWD}/docker \
+		--project-name ${INFRA} \
 		-f ${WORKSPACE}/docker-compose.yml \
 		build
 
@@ -93,9 +97,9 @@ provision: docker-compose-build
 		docker compose \
 			--env-file ${WORKSPACE}/docker_compose_dot_env \
 			--project-directory ${PWD}/docker \
+			--project-name ${INFRA} \
 			-f ${WORKSPACE}/docker-compose.yml \
 			up -d
-
 
 start: provision
 up: provision
@@ -105,13 +109,18 @@ docker-compose:
 		docker compose \
 			--env-file ${WORKSPACE}/docker_compose_dot_env \
 			--project-directory ${PWD}/docker \
+			--project-name ${INFRA} \
 			-f ${WORKSPACE}/docker-compose.yml \
 			${args}
+
+docker-compose-log:
+	make docker-compose args="logs --follow"
 
 suspend: docker-compose-build
 	docker compose \
 		--env-file ${WORKSPACE}/docker_compose_dot_env \
 		--project-directory ${PWD}/docker \
+		--project-name ${INFRA} \
 		-f ${WORKSPACE}/docker-compose.yml \
 		pause
 
@@ -119,6 +128,7 @@ resume: docker-compose-build
 	docker compose \
 		--env-file ${WORKSPACE}/docker_compose_dot_env \
 		--project-directory ${PWD}/docker \
+		--project-name ${INFRA} \
 		-f ${WORKSPACE}/docker-compose.yml \
 		unpause
 
@@ -127,8 +137,9 @@ saltman-snapshot-take:
 	@echo "take a snapshot of the containers."
 	python src/snapshots.py \
 		-f ${WORKSPACE}/docker-compose.yml \
+		--project-name ${INFRA} \
 		--action take \
-		--name ${name}
+		--name ${INFRA}-${name}-`git rev-parse --short HEAD`-`date +%Y%m%d%H%M%S`
 
 saltman-snapshot-restore:
 	@echo "restore the state of the container from snapshots."
@@ -139,21 +150,6 @@ saltman-snapshot-restore:
 
 #saltman-snapshot-list:
 #	cd examples/${INFRA} && saltman snapshot list
-
-################
-## .. todo:: this target needs be updated
-#docker-up:
-#	sleep 3
-#	docker exec -it docker-saltman-master-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
-#	docker exec -it docker-saltman-minion01-1 sed -i.bak 's/\#master\:\ salt/master\:\ master/g' /etc/salt/minion
-#	docker exec -it docker-saltman-master-1 systemctl start salt-master
-#	docker exec -it docker-saltman-master-1 systemctl start salt-minion
-#	docker exec -it docker-saltman-minion01-1 systemctl start salt-minion
-#	sleep 3
-#	docker exec -it docker-saltman-master-1 salt-key -A -y
-#	sleep 10
-#	docker exec -it docker-saltman-master-1 salt '*' test.ping
-
 
 ################
 ANSIBLE_OPTS=
@@ -221,6 +217,7 @@ down:
 	docker compose \
 		--env-file ${WORKSPACE}/docker_compose_dot_env \
 		--project-directory ${PWD}/docker \
+		--project-name ${INFRA} \
 		-f ${WORKSPACE}/docker-compose.yml \
 		down -v || true
 stop: down   # alias for stop
@@ -241,6 +238,7 @@ full-clean: docker-clean-containers docker-clean-volumes
 	docker compose \
 		--env-file ${WORKSPACE}/docker_compose_dot_env \
 		--project-directory ${PWD}/docker \
+		--project-name ${INFRA} \
 		-f ${WORKSPACE}/docker-compose.yml \
 		rm -fsv || true
 

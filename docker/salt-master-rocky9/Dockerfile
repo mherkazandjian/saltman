@@ -1,8 +1,8 @@
-#FROM redhat/ubi9:latest
 FROM rockylinux:9.3
 
-# docker run -it --rm --name systemd --privileged -ti --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:rw --cgroupns=host redhat9/salt:latest
-# docker exec -it systemd /bin/bash
+# docker buildx build -t salt-master-rocky9:latest -f salt-master-rocky9/Dockerfile .
+# docker run -it --rm --name salt-master-rocky9 --privileged -ti --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:rw --cgroupns=host salt-master-rocky9:latest
+# docker exec -it salt-master-rocky9 /bin/bash
 
 RUN dnf update -y && \
     dnf clean all

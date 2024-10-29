@@ -40,6 +40,15 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "-p",
+        "--project-name",
+        type=str,
+        default=None,
+        dest="project_name",
+        help="The name of the docker compose project"
+    )
+
+    parser.add_argument(
         "-a",
         "--action",
         type=str,
@@ -94,11 +103,14 @@ def main():
             docker_image, _ = docker_image.split(':')
         snapshot_image = f'{docker_image}:{args_parsed.snapshot_name}'
         if args_parsed.action == 'take':
-            cmd = f"docker commit docker-{service}-1 {snapshot_image}"
+            cmd = f"docker commit {args_parsed.project_name}-{service}-1 {snapshot_image}"
             print('  take a snapshot of the docker image')
             print(f'  cmd: {cmd}')
             process = Popen(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
             stdout, stderr = process.communicate()
+            if stderr:
+                print(f'  Error: {stderr}')
+                raise ValueError
         elif args_parsed.action == 'restore':
             if 'build' in code['services'][service]:
                 # make a backup of the docker compose file before modifying it

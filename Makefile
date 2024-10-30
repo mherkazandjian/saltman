@@ -11,24 +11,29 @@ ifeq "$(origin ansible_opts)" "command line"
 ANSIBLE_OPTS = ${ansible_opts}
 endif
 
-# .. todo::
-#   - modify the functionality such that if the SALTMAN_INFRA is not set then .current_env is used
-#     otherwise SALTMAN_INFRA is used then .current_env_${SALTMAN_INFRA} is used
 ifeq (${CURRENT_ENV_EXISTS},yes)
-include .current_env
-ifeq "$(origin infra)" "command line"
-INFRA = ${infra}
-endif
+    ifndef SALTMAN_INFRA
+        #$(info CURRENT_ENV_EXISTS is "yes" and SALTMAN_INFRA is not set)
+        include .current_env
+        ifeq "$(origin infra)" "command line"
+            INFRA = ${infra}
+        endif
+    else
+        #$(info SALTMAN_INFRA is set; skipping .current_env inclusion)
+        envpathbase := $(shell grep workdir projects/${SALTMAN_INFRA}/conf.yml | awk '{print $$2}')
+        #$(info ${envpathbase})
+        include ${envpathbase}/env.sh
+    endif
 else
-$(info )
-$(info WARNING:)
-$(info |    .current_env does not exist or points to a dead symlink)
-$(info |    set an environemt by pointing to a certain environment file)
-$(info )
-$(info examples:)
-$(info )
-$(info |    - make set-current-env env=~/workspaces/cluster_minimal/env.sh)
-$(info |    - make set-default-env env=~/workspaces/cluster_minimal/env.sh)
+    $(info )
+    $(info WARNING:)
+    $(info |    .current_env does not exist or points to a dead symlink)
+    $(info |    set an environemt by pointing to a certain environment file)
+    $(info )
+    $(info examples:)
+    $(info )
+    $(info |    - make set-current-env env=~/workspaces/cluster_minimal/env.sh)
+    $(info |    - make set-default-env env=~/workspaces/cluster_minimal/env.sh)
 endif
 
 
@@ -61,14 +66,17 @@ env:
 	@echo "    WORKSPACE=${WORKSPACE}"
 	@echo "    INVENTORY=${INVENTORY}"
 	@echo "    SSH_CONFIG=${SSH_CONFIG}"
+	@echo "    ANSIBLE_CONFIG=${ANSIBLE_CONFIG}"
 	@echo "    GATEWAYHOST=${GATEWAYHOST}"
 	@echo "    SALTMASTER=${SALTMASTER}"
 	@echo "    INFRA=${INFRA}"
 	@echo "make vars"
 	@echo "    ANSIBLE_FLAGS=${ANSIBLE_FLAGS}"
+	@echo "ansible --version"
+	@ansible --version
 
 list-envs:
-	@for confpath in `find projects -type f -name conf.yml -not -path "*template*"`; do \
+	@for confpath in `find projects -type f -name conf.yml -not -path "*template*" | sort`; do \
 		envpathbase=$$(grep workdir $${confpath} | awk '{print $$2}'); \
 		envpath=$${envpathbase/#\~/$$HOME}/env.sh; \
 		if [ -f $${envpath} ]; then \
@@ -167,7 +175,7 @@ bootstrap:
 	ansible-playbook ${ANSIBLE_FLAGS} ${ANSIBLE_SITE}/site.yml ${TAGS} ${ANSIBLE_OPTS}
 
 ping:
-	@ansible ${ANSIBLE_FLAGS} all -o -m ansible.builtin.ping ${ANSIBLE_OPTS}
+	ansible ${ANSIBLE_FLAGS} all -o -m ansible.builtin.ping ${ANSIBLE_OPTS}
 
 cmd:
 	ansible ${ANSIBLE_FLAGS} all -u admin -b -m ansible.builtin.shell -a "${CMD}" ${ANSIBLE_OPTS}

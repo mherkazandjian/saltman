@@ -154,7 +154,7 @@ saltman-snapshot-restore:
 	python src/snapshots.py \
 		-f ${WORKSPACE}/docker-compose.yml \
 		--action restore \
-		--name ${name}
+		--name ${INFRA}-${name}
 
 #saltman-snapshot-list:
 #	cd examples/${INFRA} && saltman snapshot list

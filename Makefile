@@ -22,7 +22,16 @@ ifeq (${CURRENT_ENV_EXISTS},yes)
         #$(info SALTMAN_INFRA is set; skipping .current_env inclusion)
         envpathbase := $(shell grep workdir projects/${SALTMAN_INFRA}/conf.yml | awk '{print $$2}')
         #$(info ${envpathbase})
-        include ${envpathbase}/env.sh
+        # if the path exists include it otherwise print an error message
+        ifneq (,$(wildcard ${envpathbase}/env.sh))
+            include ${envpathbase}/env.sh
+        else
+            $(info )
+            $(info WARNING:)
+            $(info |    ${envpathbase}/env.sh does not exist)
+            $(info |    set an environemt by pointing to a certain environment file)
+            $(info )
+        endif
     endif
 else
     $(info )
@@ -90,6 +99,7 @@ bootstrap-project:
 	@echo "bootstrap-project"
 	python src/bootstrap_project.py projects/${INFRA}/conf.yml
 
+DOCKER_COMPOSE_BUILD_OPTS ?=
 docker-compose-build:
 	echo "docker-compose-build"
 	docker compose \
@@ -97,7 +107,7 @@ docker-compose-build:
 		--project-directory ${PWD}/docker \
 		--project-name ${INFRA} \
 		-f ${WORKSPACE}/docker-compose.yml \
-		build
+		build ${DOCKER_COMPOSE_BUILD_OPTS}
 
 
 provision: docker-compose-build
@@ -216,7 +226,6 @@ salt-clear-cache:
 	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.clear_cache -t 120"
 
 salt-refresh: | salt-clear-cache salt-sync
-	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.clear_cache -t 120"
 
 salt-apply:
 	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' state.apply -t 120"
@@ -249,6 +258,7 @@ full-clean: docker-clean-containers docker-clean-volumes
 		--project-name ${INFRA} \
 		-f ${WORKSPACE}/docker-compose.yml \
 		rm -fsv || true
+	rm -fvr ${WORKSPACE}
 
 deep-clean:
 	docker rmi \

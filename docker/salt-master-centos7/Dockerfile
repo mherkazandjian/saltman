@@ -34,8 +34,9 @@ RUN ([ -d /lib/systemd/system/sysinit.target.wants ] && cd /lib/systemd/system/s
     rm -f /lib/systemd/system/anaconda.target.wants/*;
 VOLUME [ "/sys/fs/cgroup" ]
 
-RUN rpm --import https://repo.saltproject.io/salt/py3/redhat/7/x86_64/SALT-PROJECT-GPG-PUBKEY-2023.pub && \
-    curl -fsSL https://repo.saltproject.io/salt/py3/redhat/7/x86_64/latest.repo | tee /etc/yum.repos.d/salt.repo && \
+RUN curl -fsSL https://github.com/saltstack/salt-install-guide/releases/latest/download/salt.repo | tee /etc/yum.repos.d/salt.repo && \
+    yum-config-manager --enable salt-repo-3006-lts && \
+    yum-config-manager --disable salt-repo-3007-sts && \
     yum install -y \
         salt-master \
         salt-minion \

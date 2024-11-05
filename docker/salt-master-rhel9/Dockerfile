@@ -16,6 +16,7 @@ RUN dnf -y install \
         rsync \
         iputils \
         openssh-server \
+        'dnf-command(config-manager)' \
         openssh-clients && \
     dnf clean all
 
@@ -32,8 +33,9 @@ RUN ([ -d /lib/systemd/system/sysinit.target.wants ] && cd /lib/systemd/system/s
 VOLUME [ "/sys/fs/cgroup" ]
 
 
-RUN rpm --import https://repo.saltproject.io/salt/py3/redhat/9/x86_64/SALT-PROJECT-GPG-PUBKEY-2023.pub && \
-    curl -fsSL https://repo.saltproject.io/salt/py3/redhat/9/x86_64/latest.repo | tee /etc/yum.repos.d/salt.repo && \
+RUN curl -fsSL https://github.com/saltstack/salt-install-guide/releases/latest/download/salt.repo | tee /etc/yum.repos.d/salt.repo && \
+    dnf config-manager --set-disabled salt-repo-3006-lts && \
+    dnf config-manager --set-enabled salt-repo-3007-sts && \
     dnf install -y \
         salt-master \
         salt-minion \

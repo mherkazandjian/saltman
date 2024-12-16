@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
+CONFIGS_DIR ?= projects
 CURRENT_ENV_EXISTS := $(shell test -f .current_env && printf yes)
 
 ifeq "$(origin infra)" "command line"
@@ -20,7 +21,7 @@ ifeq (${CURRENT_ENV_EXISTS},yes)
         endif
     else
         #$(info SALTMAN_INFRA is set; skipping .current_env inclusion)
-        envpathbase := $(shell grep workdir projects/${SALTMAN_INFRA}/conf.yml | awk '{print $$2}')
+        envpathbase := $(shell grep workdir ${CONFIGS_DIR}/${SALTMAN_INFRA}/conf.yml | awk '{print $$2}')
         #$(info ${envpathbase})
         # if the path exists include it otherwise print an error message
         ifneq (,$(wildcard ${envpathbase}/env.sh))
@@ -85,7 +86,7 @@ env:
 	@ansible --version
 
 list-envs:
-	@for confpath in `find projects -type f -name conf.yml -not -path "*template*" | sort`; do \
+	@for confpath in `find ${CONFIGS_DIR} -type f -name conf.yml -not -path "*template*" | sort`; do \
 		envpathbase=$$(grep workdir $${confpath} | awk '{print $$2}'); \
 		envpath=$${envpathbase/#\~/$$HOME}/env.sh; \
 		if [ -f $${envpath} ]; then \
@@ -97,7 +98,7 @@ list-envs:
 ################
 bootstrap-project:
 	@echo "bootstrap-project"
-	python src/bootstrap_project.py projects/${INFRA}/conf.yml
+	python src/bootstrap_project.py ${CONFIGS_DIR}/${INFRA}/conf.yml
 
 DOCKER_COMPOSE_BUILD_OPTS ?=
 docker-compose-build:
@@ -218,14 +219,15 @@ salt-refresh-pillars:
 	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.refresh_pillar -t 120"
 
 salt-sync:
-	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.refresh_pillar -t 120"
 	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.sync_all -t 120"
 	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.sync_states -t 120"
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.refresh_pillar -t 120"
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.sync_all -t 120"
 
 salt-clear-cache:
 	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.clear_cache -t 120"
 
-salt-refresh: | salt-clear-cache salt-sync
+salt-refresh: | env salt-clear-cache salt-sync
 
 salt-apply:
 	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' state.apply -t 120"

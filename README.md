@@ -19,4 +19,8 @@ make saltman-snapshot-take name='vanilla'
 make saltman-snapshot-restore name='vanilla'
 make up
 make site TAGS='--tags=salt-service'
+
+# salt
+salt node01 state.apply linux.pakcages.repos test=true
+salt node01 state.apply irods.psql test=true
 ```

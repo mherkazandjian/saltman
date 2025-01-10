@@ -152,6 +152,7 @@ resume: docker-compose-build
 		unpause
 
 
+snapshot-take: saltman-snapshot-take
 saltman-snapshot-take:
 	@echo "take a snapshot of the containers."
 	python src/snapshots.py \
@@ -160,6 +161,7 @@ saltman-snapshot-take:
 		--action take \
 		--name ${INFRA}-${name}-`git rev-parse --short HEAD`-`date +%Y%m%d%H%M%S`
 
+snapshot-restore: saltman-snapshot-restore
 saltman-snapshot-restore:
 	@echo "restore the state of the container from snapshots."
 	python src/snapshots.py \
@@ -167,8 +169,10 @@ saltman-snapshot-restore:
 		--action restore \
 		--name ${INFRA}-${name}
 
-#saltman-snapshot-list:
-#	cd examples/${INFRA} && saltman snapshot list
+snapshot-list: saltman-snapshot-list
+saltman-snapshot-list:
+	@echo "list the snapshots."
+	docker images | grep saltman | grep ${INFRA}
 
 ################
 ANSIBLE_OPTS=
@@ -284,6 +288,18 @@ clean:
 	@find . -name "*.pyo*" | xargs rm -fvr
 
 help:
+	@ echo '-=-=-=-=-=-=-=-=--=-=  env -=-=-=-=-=-=-=-=-=--=-='
+	@echo set-default-env
+	@echo set-current-env
+	@echo set-current-env-as-default
+	@echo use-default-env-as-current
+	@echo env
+	@echo list-envs
+	@ echo '-=-=-=-=-=-=-=-=--=-=  project -=-=-=-=-=-=-=-=-=--=-='
+	@echo bootstrap-project
+	@echo bootstrap
+	@echo provision
+	@ echo '-=-=-=-=-=-=-=-=--=-=  docker -=-=-=-=-=-=-=-=-=--=-='
 	@echo docker-build:
 	@echo docker-clean-containers:
 	@echo docker-clean-images:
@@ -291,5 +307,41 @@ help:
 	@echo docker-deep-clean: docker-clean-containers docker-clean-images docker-clean-volume
 	@echo docker-down:
 	@echo docker-up:
-	@echo salt-master:
+	@echo docker-clean-containers
+	@echo docker-clean-volumes
+	@echo full-clean
+	@echo deep-clean
+	@echo docker-deep-clean
+	@echo clean
+	@echo docker-compose
+	@echo docker-compose-log
+	@echo salt-master
+	@ echo '-=-=-=-=-=-=-=-=--=-=  ansible -=-=-=-=-=-=-=-=-=--=-='
 	@echo playbook: 'make playbook PLAYBOOK="../path/to/myplaybook.yml --check"'
+	@echo ansible-site-syntax
+	@echo site
+	@echo playbook
+	@echo ping
+	@echo cmd
+	@echo ssh
+	@echo ssh-root
+	@echo ssh-to
+	@ echo '-=-=-=-=-=-=-=-=--=-=  control -=-=-=-=-=-=-=-=-=--=-='
+	@echo start
+	@echo up
+	@echo suspend
+	@echo resume
+	@echo snapshot-take
+	@echo snapshot-restore
+	@echo down
+	@echo stop
+	@ echo '-=-=-=-=-=-=-=-=--=-=  salt -=-=-=-=-=-=-=-=-=--=-='
+	@echo ssh-salt-master
+	@echo salt-ping
+	@echo salt-bootstrap
+	@echo salt-sync-states
+	@echo -e "\033[0;32msalt-refresh\033[0m"
+	@echo -e "\033[0;32msalt-refresh-pillars\033[0m"
+	@echo salt-sync
+	@echo salt-clear-cache
+	@echo salt-apply

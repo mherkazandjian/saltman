@@ -168,6 +168,8 @@ saltman-snapshot-restore:
 		-f ${WORKSPACE}/docker-compose.yml \
 		--action restore \
 		--name ${INFRA}-${name}
+	make down
+	make up
 
 snapshot-list: saltman-snapshot-list
 saltman-snapshot-list:
@@ -300,13 +302,11 @@ help:
 	@echo bootstrap
 	@echo provision
 	@ echo '-=-=-=-=-=-=-=-=--=-=  docker -=-=-=-=-=-=-=-=-=--=-='
-	@echo docker-build:
-	@echo docker-clean-containers:
-	@echo docker-clean-images:
-	@echo docker-clean-volumes:
-	@echo docker-deep-clean: docker-clean-containers docker-clean-images docker-clean-volume
-	@echo docker-down:
-	@echo docker-up:
+	@echo docker-build
+	@echo docker-clean-containers
+	@echo docker-clean-images
+	@echo docker-clean-volumes
+	@echo docker-deep-clean
 	@echo docker-clean-containers
 	@echo docker-clean-volumes
 	@echo full-clean
@@ -331,8 +331,9 @@ help:
 	@echo up
 	@echo suspend
 	@echo resume
-	@echo snapshot-take
-	@echo snapshot-restore
+	@echo snapshot-take name=<snapshot-name>
+	@echo snapshot-restore name=<snapshot-name>
+	@echo snapshot-list
 	@echo down
 	@echo stop
 	@ echo '-=-=-=-=-=-=-=-=--=-=  salt -=-=-=-=-=-=-=-=-=--=-='

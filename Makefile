@@ -159,7 +159,7 @@ saltman-snapshot-take:
 		-f ${WORKSPACE}/docker-compose.yml \
 		--project-name ${INFRA} \
 		--action take \
-		--name ${INFRA}-${name}-`git rev-parse --short HEAD`-`date +%Y%m%d%H%M%S`
+		--name ${INFRA}-`date +%Y%m%d%H%M%S`-${name}-`git rev-parse --short HEAD`
 
 snapshot-restore: saltman-snapshot-restore
 saltman-snapshot-restore:

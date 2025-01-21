@@ -331,8 +331,8 @@ help:
 	@echo up
 	@echo suspend
 	@echo resume
-	@echo snapshot-take name=<snapshot-name>
-	@echo snapshot-restore name=<snapshot-name>
+	@echo snapshot-take name='<snapshot-name>'
+	@echo snapshot-restore name='<snapshot-name>'
 	@echo snapshot-list
 	@echo down
 	@echo stop

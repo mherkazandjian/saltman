@@ -82,14 +82,16 @@ env:
 	@echo "    INFRA=${INFRA}"
 	@echo "make vars"
 	@echo "    ANSIBLE_FLAGS=${ANSIBLE_FLAGS}"
+	@echo "    CONFIGS_DIR=${CONFIGS_DIR}"
+	@echo "    SALTMAN_INFRA=${SALTMAN_INFRA}"
 	@echo "ansible --version"
 	@ansible --version
 
 list-envs:
 	@for confpath in `find ${CONFIGS_DIR} -type f -name conf.yml -not -path "*template*" | sort`; do \
-		envpathbase=$$(grep workdir $${confpath} | awk '{print $$2}'); \
+		envpathbase=$$(grep -E '^workdir:' $${confpath} | awk '{print $$2}'); \
 		envpath=$${envpathbase/#\~/$$HOME}/env.sh; \
-		if [ -f $${envpath} ]; then \
+		if [ -f "$${envpath}" ]; then \
 			echo "make set-current-env env="$${envpath}; \
 			echo "     " `grep "short_description:" $${confpath}`; \
 		fi; \
@@ -98,7 +100,7 @@ list-envs:
 ################
 bootstrap-project:
 	@echo "bootstrap-project"
-	python src/bootstrap_project.py ${CONFIGS_DIR}/${INFRA}/conf.yml
+	python3 src/bootstrap_project.py ${CONFIGS_DIR}/${INFRA}/conf.yml
 
 DOCKER_COMPOSE_BUILD_OPTS ?=
 docker-compose-build:
@@ -110,6 +112,14 @@ docker-compose-build:
 		-f ${WORKSPACE}/docker-compose.yml \
 		build ${DOCKER_COMPOSE_BUILD_OPTS}
 
+docker-compose-config:
+	docker compose \
+		--env-file ${WORKSPACE}/docker_compose_dot_env \
+		--project-directory ${PWD}/docker \
+		--project-name ${INFRA} \
+		-f ${WORKSPACE}/docker-compose.yml \
+		config
+
 
 provision: docker-compose-build
 	ADMIN_SSH_PUBLIC_KEY=`cat ${WORKSPACE}/id_ed25519.pub` \
@@ -119,6 +129,26 @@ provision: docker-compose-build
 			--project-name ${INFRA} \
 			-f ${WORKSPACE}/docker-compose.yml \
 			up -d
+
+foo:
+	@echo ${env}
+
+setup-and-start:
+	@if [ -z "${infra}" ]; then \
+		echo -e "\033[0;31minfra variable not set, exiting.\033[0m" >&2; \
+		echo -e "execute as:" >&2; \
+		echo -e "   \033[0;32mmake setup-and-start infra=<infra>\033[0m" >&2; \
+		exit 1; \
+	fi
+	@echo 'bootstrap the project'
+	$(MAKE) bootstrap-project infra=${infra}
+	@confpath="${CONFIGS_DIR}/${infra}/conf.yml"; \
+	envpathbase=$$(grep -E '^workdir:' "$${confpath}" | awk '{print $$2}'); \
+	envpath=$${envpathbase/#\~/$$HOME}/env.sh; \
+	$(MAKE) set-current-env env=$${envpath}; \
+	$(MAKE) docker-compose-build; \
+	$(MAKE) provision;
+
 
 start: provision
 up: provision
@@ -155,7 +185,7 @@ resume: docker-compose-build
 snapshot-take: saltman-snapshot-take
 saltman-snapshot-take:
 	@echo "take a snapshot of the containers."
-	python src/snapshots.py \
+	python3 src/snapshots.py \
 		-f ${WORKSPACE}/docker-compose.yml \
 		--project-name ${INFRA} \
 		--action take \
@@ -164,7 +194,7 @@ saltman-snapshot-take:
 snapshot-restore: saltman-snapshot-restore
 saltman-snapshot-restore:
 	@echo "restore the state of the container from snapshots."
-	python src/snapshots.py \
+	python3 src/snapshots.py \
 		-f ${WORKSPACE}/docker-compose.yml \
 		--action restore \
 		--name ${INFRA}-${name}
@@ -223,6 +253,7 @@ salt-sync-states:
 
 salt-refresh-pillars:
 	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.refresh_pillar -t 120"
+	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' mine.update -t 120"
 
 salt-sync:
 	ssh -F ${SSH_CONFIG} ${SALTMASTER} "sudo salt '*' saltutil.sync_all -t 120"
@@ -289,7 +320,7 @@ clean:
 	@find . -name "*.pyc*" | xargs rm -fvr
 	@find . -name "*.pyo*" | xargs rm -fvr
 
-help:
+help: env
 	@ echo '-=-=-=-=-=-=-=-=--=-=  env -=-=-=-=-=-=-=-=-=--=-='
 	@echo set-default-env
 	@echo set-current-env
@@ -298,7 +329,7 @@ help:
 	@echo env
 	@echo list-envs
 	@ echo '-=-=-=-=-=-=-=-=--=-=  project -=-=-=-=-=-=-=-=-=--=-='
-	@echo bootstrap-project
+	@echo bootstrap-project infra='dev01'
 	@echo bootstrap
 	@echo provision
 	@ echo '-=-=-=-=-=-=-=-=--=-=  docker -=-=-=-=-=-=-=-=-=--=-='

@@ -7,6 +7,7 @@ if ! id -u admin &>/dev/null; then
     echo "creating the admin user"
     useradd -m admin -s /bin/bash -d /admin
     chown -Rc admin:admin /admin
+    chmod 700 /admin
 
     # if the ssh key does not exist, generate it
     if [ ! -f /admin/.ssh/id_ed25519 ]; then

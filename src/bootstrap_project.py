@@ -47,8 +47,15 @@ class Provisioner:
 
             if cluster_files := cluster_conf.get('files'):
                 print(f'\t\twrite files for cluster {cluster_name}')
+                
                 for file_name, file_content in cluster_files.items():
                     file_path = os.path.expanduser(cluster_workdir / Path(file_name))
+                    # Check if the dir exists, otherwise create it
+                    dirname = os.path.dirname(file_path)
+                    if not os.path.exists(dirname):
+                        print(f'\t\t\tdirectory did not exist, create it: {dirname}')
+                        os.makedirs(dirname, exist_ok=True)
+                    
                     print(f'\t\t\twrite file {file_path}')
                     with open(file_path, 'w') as fobj:
                         fobj.write(file_content)

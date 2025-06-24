@@ -208,18 +208,18 @@ saltman-snapshot-list:
 
 ################
 ANSIBLE_OPTS=
-ANSIBLE_SITE=${HOME}/projects/surf/dms-salt-researchcloud/ansible
+ANSIBLE_SITE := ${ANSIBLE_SITE_DIR}
 ansible-site-syntax:
-	ansible-playbook ${ANSIBLE_FLAGS} --become ${ANSIBLE_SITE}/site.yml ${TAGS} --syntax-check ${ANSIBLE_OPTS}
+	ansible-playbook ${ANSIBLE_FLAGS} --become ${ANSIBLE_SITE_DIR}/site.yml ${TAGS} --syntax-check ${ANSIBLE_OPTS}
 
 site:
-	ansible-playbook ${ANSIBLE_FLAGS} --become ${ANSIBLE_SITE}/site.yml ${TAGS} ${ANSIBLE_OPTS}
+	ansible-playbook ${ANSIBLE_FLAGS} --become ${ANSIBLE_SITE_DIR}/site.yml ${TAGS} ${ANSIBLE_OPTS}
 
 playbook:
 	ansible-playbook ${ANSIBLE_FLAGS} ${PLAYBOOK} ${TAGS} ${ANSIBLE_OPTS}
 
 bootstrap:
-	ansible-playbook ${ANSIBLE_FLAGS} ${ANSIBLE_SITE}/site.yml ${TAGS} ${ANSIBLE_OPTS}
+	ansible-playbook ${ANSIBLE_FLAGS} ${ANSIBLE_SITE_DIR}/site.yml ${TAGS} ${ANSIBLE_OPTS}
 
 ping:
 	ansible ${ANSIBLE_FLAGS} all -o -m ansible.builtin.ping ${ANSIBLE_OPTS}
